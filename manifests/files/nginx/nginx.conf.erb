@@ -9,10 +9,10 @@ server {
         }
 
         location /static/ {
-                alias /home/<%= user %>/public_html/<%= domain_name %>/static/;
+                alias /home/<%= user %>/www/<%= domain_name %>/static/;
         }
 
         location /media/ {
-                alias /home/<%= user %>/public_html/<%= domain_name %>/media/;
+                alias /home/<%= user %>/www/<%= domain_name %>/media/;
         }
 }
