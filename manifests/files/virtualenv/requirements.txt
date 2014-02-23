@@ -1,7 +1,0 @@
-Django
-Fabric
-MySQL-python
-PIL
-South
-django-compressor
-django-debug-toolbar

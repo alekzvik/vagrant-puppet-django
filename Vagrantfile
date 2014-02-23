@@ -12,7 +12,9 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   #config.vm.box_url = "http://files.vagrantup.com/precise64.box"
   config.vm.box = "saucy-server-cloudimg-amd64-vagrant-disk1"
   config.vm.box_url = "http://cloud-images.ubuntu.com/vagrant/saucy/current/saucy-server-cloudimg-amd64-vagrant-disk1.box"
-
+  config.vm.provider "virtualbox" do |v|
+      v.memory = 1024
+  end
   # Boot with a GUI so you can see the screen. (Default is headless)
   # config.vm.boot_mode = :gui
 
@@ -29,7 +31,15 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
   # Forward a port from the guest to the host, which allows for outside
   # computers to access the VM, whereas host only networking does not.
+  config.ssh.forward_agent = true
+  #config.ssh.private_key_path = "~/.ssh/id_rsa"
+  # For using ssh forwarding you have to set up your system
+  # https://help.github.com/articles/using-ssh-agent-forwarding
+  config.vm.hostname = "django.dev"
+  config.vm.network "private_network", ip: "192.168.50.4"
   config.vm.network :forwarded_port, guest: 80, host: 8080
+  config.vm.network :forwarded_port, guest: 8000, host: 8000
+  config.vm.synced_folder "./src", "/home/vagrant/www", type: "nfs", nfs_version:4
 
   # Share an additional folder to the guest VM. The first argument is
   # an identifier, the second is the path on the guest to mount the
@@ -39,6 +49,6 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   # Enable provisioning with Puppet stand alone. 
   config.vm.provision :puppet do |puppet|
     puppet.manifests_path = "manifests"
-    puppet.manifest_file  = "acs.pp"
+    puppet.manifest_file  = "site.pp"
   end
 end

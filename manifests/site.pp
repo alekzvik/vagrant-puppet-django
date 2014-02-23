@@ -2,14 +2,11 @@ Exec { path => '/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin' }
 
 # Global variables
 $inc_file_path = '/vagrant/manifests/files' # Absolute path to the files directory (If you're using vagrant, you can leave it alone.)
-$tz = 'Asia/Bangkok' # Timezone
-$user = 'USERNAME' # User to create
-$password = 'PASSWORD' # The user's password
-$project = 'PROJECT_NAME' # Used in nginx and uwsgi
-$domain_name = 'PROJECT_DOMAIN_NAME.com' # Used in nginx, uwsgi and virtualenv directory
-$db_name = 'DB_NAME' # Mysql database name to create
-$db_user = 'DB_USER' # Mysql username to create
-$db_password = 'DB_PASSWORD' # Mysql password for $db_user
+$tz = 'Europe/Kiev' # Timezone
+$project = '42-kavyarnya' # Used in nginx and uwsgi
+$db_name = 'kava' # Mysql database name to create
+$db_user = 'kava' # Mysql username to create
+$db_password = 'kava' # Mysql password for $db_user
 
 include timezone
 include user
@@ -21,6 +18,7 @@ include python
 include virtualenv
 include pildeps
 include software
+include locale
 
 class timezone {
   package { "tzdata":
@@ -35,36 +33,22 @@ class timezone {
 }
 
 class user {
-  exec { 'add user':
-    command => "sudo useradd -m -G sudo -s /bin/bash ${user}",
-    unless => "id -u ${user}"
-  }
-
-  exec { 'set password':
-    command => "echo \"${user}:${password}\" | sudo chpasswd",
-    require => Exec['add user']
-  }
 
   # Prepare user's project directories
-  file { ["/home/${user}/virtualenvs",
-          "/home/${user}/www",
-          "/home/${user}/www/${domain_name}",
-          "/home/${user}/www/${domain_name}/static"
+  file { ["/home/vagrant/virtualenvs",
+          "/home/vagrant/www",
+          "/home/vagrant/www/${project}",
+          "/home/vagrant/www/${project}/static"
           ]:
     ensure => directory,
-    owner => "${user}",
-    group => "${user}",
-    require => Exec['add user'],
+    owner => 'vagrant',
     before => File['media dir']
   }
 
   file { 'media dir':
-    path => "/home/${user}/www/${domain_name}/media",
+    path => "/home/vagrant/www/${project}/media",
     ensure => directory,
-    owner => "${user}",
-    group => 'www-data',
-    mode => 0775,
-    require => Exec['add user']
+    mode => 0777,
   }
 }
 
@@ -78,10 +62,10 @@ class apt {
     require => Exec['apt-get update']
   }
 
-  exec { 'add-apt-repository ppa:nginx/stable':
-    require => Package['python-software-properties'],
-    before => Exec['last ppa']
-  }
+  #exec { 'add-apt-repository ppa:nginx/stable':
+    #require => Package['python-software-properties'],
+    #before => Exec['last ppa']
+  #}
 
   exec { 'last ppa':
     command => 'add-apt-repository ppa:git-core/ppa',
@@ -113,15 +97,15 @@ class nginx {
   }
 
   file { 'sites-available config':
-    path => "/etc/nginx/sites-available/${domain_name}",
+    path => "/etc/nginx/sites-available/${project}",
     ensure => file,
     content => template("${inc_file_path}/nginx/nginx.conf.erb"),
     require => Package['nginx']
   }
 
-  file { "/etc/nginx/sites-enabled/${domain_name}":
+  file { "/etc/nginx/sites-enabled/${project}":
     ensure => link,
-    target => "/etc/nginx/sites-available/${domain_name}",
+    target => "/etc/nginx/sites-available/${project}",
     require => File['sites-available config'],
     notify => Service['nginx']
   }
@@ -224,14 +208,22 @@ class python {
     require => Class['apt']
   }
 
+  package { 'libssl-dev':
+    ensure => latest,
+    require => Class['apt']
+  }
+
+
   exec { 'install-distribute':
     command => 'curl http://python-distribute.org/distribute_setup.py | python',
-    require => Package['python', 'curl']
+    require => Package['python', 'curl'],
+    unless => 'which easy_install'
   }
 
   exec { 'install-pip':
     command => 'curl https://raw.github.com/pypa/pip/master/contrib/get-pip.py | python',
-    require => Exec['install-distribute']
+    require => Exec['install-distribute'],
+    unless => 'which pip'
   }
 }
 
@@ -243,25 +235,23 @@ class virtualenv {
   }
 
   exec { 'create virtualenv':
-    command => "virtualenv ${domain_name}",
-    cwd => "/home/${user}/virtualenvs",
-    user => $user,
-    creates => "/home/${user}/virtualenvs/${domain_name}",
+    command => "virtualenv ${project}",
+    cwd => "/home/vagrant/virtualenvs",
+    user => 'vagrant',
+    creates => "/home/vagrant/virtualenvs/${project}",
     require => Package['virtualenv']
   }
 
-  file { "/home/${user}/virtualenvs/${domain_name}/requirements.txt":
+  file {"/home/vagrant/.bashrc":
     ensure => file,
-    owner => "${user}",
-    group => "${user}",
     mode => 0644,
-    source => "${inc_file_path}/virtualenv/requirements.txt",
+    content => template("${inc_file_path}/bash/bashrc.erb"),
     require => Exec['create virtualenv']
   }
 }
 
 class pildeps {
-  package { ['python-imaging', 'libjpeg-dev', 'libfreetype6-dev']:
+  package { ['python-imaging', 'libjpeg-dev', 'libfreetype6-dev', 'fontconfig']:
     ensure => latest,
     require => Class['apt'],
     before => Exec['pil png', 'pil jpg', 'pil freetype']
@@ -293,4 +283,22 @@ class software {
     ensure => latest,
     require => Class['apt']
   }
+}
+
+class locale{
+    package{ "locales":
+        ensure => latest,
+    }
+    file { "/var/lib/locales/supported.d/local":
+        content=> "en_US.UTF-8 UTF-8\nen_GB.UTF-8 UTF-8\nuk_UA.UTF-8 UTF-8",
+        owner => "root",
+        group => "root",
+        mode => 644,
+        require => Package[locales],
+    }
+    exec { "/usr/sbin/locale-gen":
+        subscribe => File["/var/lib/locales/supported.d/local"],
+        refreshonly => true,
+        require => [Package[locales],File["/var/lib/locales/supported.d/local"]],
+    }
 }

@@ -1,18 +1,18 @@
 server {
         listen   80;
 
-        server_name <%= domain_name %>;
+        server_name <%= @project %>;
 
         location / {
-                uwsgi_pass unix:/tmp/uwsgi/<%= project %>.sock;
+                uwsgi_pass unix:/tmp/uwsgi/<%= @project %>.sock;
                 include uwsgi_params;
         }
 
         location /static/ {
-                alias /home/<%= user %>/www/<%= domain_name %>/static/;
+                alias /home/vagrant/www/<%= @project %>/static/;
         }
 
         location /media/ {
-                alias /home/<%= user %>/www/<%= domain_name %>/media/;
+                alias /home/vagrant/www/<%= @project %>/media/;
         }
 }
