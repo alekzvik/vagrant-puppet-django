@@ -3,17 +3,18 @@ Exec { path => '/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin' }
 # Global variables
 $inc_file_path = '/vagrant/manifests/files' # Absolute path to the files directory (If you're using vagrant, you can leave it alone.)
 $tz = 'Europe/Kiev' # Timezone
-$project = '42-kavyarnya' # Used in nginx and uwsgi
-$db_name = 'kava' # Mysql database name to create
-$db_user = 'kava' # Mysql username to create
-$db_password = 'kava' # Mysql password for $db_user
+$project = 'p2psafety' # Used in nginx and uwsgi
+$db_name = 'p2psafety' # Mysql database name to create
+$db_user = 'vagrant' # Mysql username to create
+$db_password = 'vagrant' # Mysql password for $db_user
 
 include timezone
 include user
 include apt
 include nginx
 include uwsgi
-include mysql
+#include mysql
+include postgis
 include python
 include virtualenv
 include pildeps
@@ -66,6 +67,10 @@ class apt {
     #require => Package['python-software-properties'],
     #before => Exec['last ppa']
   #}
+
+  exec { 'add-apt-repository ppa:ubuntugis/ubuntugis-unstable':
+    before => Exec['last ppa']
+  }
 
   exec { 'last ppa':
     command => 'add-apt-repository ppa:git-core/ppa',
@@ -190,6 +195,59 @@ class mysql {
     unless => "mysqlshow -u${db_user} -p${db_password} ${db_name}",
     require => Service['mysql']
   }
+}
+
+class postgis {
+  $db_command = "psql -d template1 -U postgres -c"
+  $create_db_cmd = "CREATE DATABASE ${db_name}  WITH ENCODING 'UTF8';"
+  $create_user_cmd = "CREATE USER ${db_user} WITH PASSWORD '${db_password}';"
+  $grant_db_cmd = "ALTER ROLE ${db_user} SUPERUSER;"
+  
+  $geo_cmd = "CREATE EXTENSION postgis; CREATE EXTENSION postgis_topology;"
+
+  package { 'postgresql-9.1-postgis-2.1':
+    ensure => latest,
+    require => Class['apt']
+  }
+
+  package { 'postgresql-contrib':
+    ensure => latest,
+    require => Class['apt']
+  }
+
+  package { 'postgresql-server-dev-9.1':
+    ensure => latest,
+    require => Class['apt']
+  }
+
+  service { 'postgresql':
+    ensure => running,
+    enable => true,
+    require => Package['postgresql-9.1-postgis-2.1']
+  }
+
+  exec { 'createdb':
+    command => "${db_command} \"${create_db_cmd}\" ",
+    user => "postgres",
+    unless => "psql ${db_name} -c \"\\d\"",
+    before => Exec['geocmd','dbuser'],
+    require => Service['postgresql']
+  }
+
+  exec {'dbuser':
+    command => "${db_command} \"${create_user_cmd}${grant_db_cmd}\"",
+    user => "postgres",
+    unless => "psql ${db_name} -c \"\\du\" | grep -c ${db_user}" ,
+    require => Service['postgresql']
+  }
+
+  exec {'geocmd':
+    command => "psql -d ${db_name} -c \"${geo_cmd}\"",
+    user => "postgres",
+    unless => "psql ${db_name} -c \"select count(*) from spatial_ref_sys\"",
+    require => Service['postgresql']
+  }
+
 }
 
 class python {
