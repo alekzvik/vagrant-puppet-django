@@ -20,11 +20,18 @@ Puppet provisions:
 ## Usage
 
 - Edit configuration variables in the `site.pp` file
-- clone or put your project into src dir
+- clone or put your project into `src` dir
 - `vagrant up`
-- get your project inside VM in WWW dir, install requirements, do stuff (virtualenv is created and activated automatically)
+- `vagrant ssh` to get inside VM
+- your project is in `www` dirinside VM 
+- install requirements, do stuff (virtualenv is created and activated automatically), develop
 
 That's it! You are all set.
+
+Now you can run 
+```python manage.py runserver 0.0.0.0:8000```
+inside VM and get your project on `127.0.0.1:8000`
+Also there is nginx+uwsgi binded to your 127.0.0.1:8080 but usually you have to spend some time to set it up properly.
 
 ## Note
 
