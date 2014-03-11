@@ -62,10 +62,10 @@ class apt {
     require => Exec['apt-get update']
   }
 
-  #exec { 'add-apt-repository ppa:nginx/stable':
-    #require => Package['python-software-properties'],
-    #before => Exec['last ppa']
-  #}
+  exec { 'add-apt-repository ppa:nginx/stable':
+    require => Package['python-software-properties'],
+    before => Exec['last ppa']
+  }
 
   exec { 'last ppa':
     command => 'add-apt-repository ppa:git-core/ppa',
@@ -275,6 +275,11 @@ class pildeps {
 
 class software {
   package { 'git':
+    ensure => latest,
+    require => Class['apt']
+  }
+
+  package { 'mercurial':
     ensure => latest,
     require => Class['apt']
   }
