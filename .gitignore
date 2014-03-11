@@ -15,6 +15,7 @@ local.properties
 .classpath
 .settings/
 .loadpath
+.vagrant
 
 # External tool builders
 .externalToolBuilders/

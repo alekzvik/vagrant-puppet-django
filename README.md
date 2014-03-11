@@ -14,12 +14,15 @@ Puppet provisions:
 - Django
 - PIL dependencies to support jpg, zlib, freetype
 - Git
+- Mercurial
 - Vim
 
 ## Usage
 
 - Edit configuration variables in the `site.pp` file
+- clone or put your project into src dir
 - `vagrant up`
+- get your project inside VM in WWW dir, install requirements, do stuff (virtualenv is created and activated automatically)
 
 That's it! You are all set.
 
