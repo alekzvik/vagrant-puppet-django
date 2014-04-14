@@ -9,10 +9,10 @@ server {
         }
 
         location /static/ {
-                alias /home/vagrant/www/<%= @project %>/static/;
+                alias /home/vagrant/www/<%= @project %>/<%= @project %>/static/;
         }
 
         location /media/ {
-                alias /home/vagrant/www/<%= @project %>/media/;
+                alias /home/vagrant/www/<%= @project %>/<%= @project %>/media/;
         }
 }

@@ -39,8 +39,13 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   config.vm.network "private_network", ip: "192.168.50.18"
   config.vm.network :forwarded_port, guest: 80, host: 8080
   config.vm.network :forwarded_port, guest: 8000, host: 8000
-  config.vm.synced_folder "./src", "/home/vagrant/www", type: "nfs", nfs_version:4
 
+
+  if (/darwin/ =~ RUBY_PLATFORM) != nil
+      config.vm.synced_folder "./src", "/home/vagrant/www"
+  else
+      config.vm.synced_folder "./src", "/home/vagrant/www", type: "nfs", nfs_version:4
+  end
   # Share an additional folder to the guest VM. The first argument is
   # an identifier, the second is the path on the guest to mount the
   # folder, and the third is the path on the host to the actual folder.
