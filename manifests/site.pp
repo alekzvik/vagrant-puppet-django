@@ -14,6 +14,7 @@ include apt
 include nginx
 include uwsgi
 include mysql
+#include postgres
 include python
 include virtualenv
 include pildeps
@@ -164,6 +165,47 @@ class uwsgi {
   }
 }
 
+class postgres {
+  $db_command = "psql -d template1 -U postgres -c"
+  $create_db_cmd = "CREATE DATABASE ${db_name};"
+  $create_user_cmd = "CREATE USER ${db_user} WITH PASSWORD '${db_password}';"
+
+  package { 'postgresql':
+    ensure => latest,
+    require => Class['apt']
+  }
+
+  package { 'postgresql-contrib':
+    ensure => latest,
+    require => Class['apt']
+  }
+
+  package { 'postgresql-server-dev-9.1':
+    ensure => latest,
+    require => Class['apt']
+  }
+
+  service { 'postgresql':
+    ensure => running,
+    enable => true,
+    require =>Package['postgresql']
+  }
+  exec { 'createdb':
+    command => "${db_command} \"${create_db_cmd}\" ",
+    user => "postgres",
+    before => Exec['dbuser'],
+    unless => "psql ${db_name} -c \"\\d\"",
+    require => [Class['locale'],Service['postgresql']]
+  }
+
+  exec {'dbuser':
+    command => "${db_command} \"${create_user_cmd}\"",
+    user => "postgres",
+    unless => "psql ${db_name} -c \"\\du\" | grep -c ${db_user}" ,
+    require => Service['postgresql']
+  }
+
+}
 class mysql {
   $create_db_cmd = "CREATE DATABASE ${db_name} CHARACTER SET utf8;"
   $create_user_cmd = "CREATE USER '${db_user}'@localhost IDENTIFIED BY '${db_password}';"
