@@ -165,7 +165,6 @@ class uwsgi {
   }
 }
 
-
 class postgres {
   $db_command = "psql -d template1 -U postgres -c"
   $create_db_cmd = "CREATE DATABASE ${db_name};"
