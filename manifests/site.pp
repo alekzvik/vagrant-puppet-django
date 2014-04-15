@@ -15,6 +15,7 @@ include nginx
 include uwsgi
 #include mysql
 include postgres
+include redis
 include python
 include virtualenv
 include pildeps
@@ -123,6 +124,13 @@ class uwsgi {
     require => Class['python']
   }
 
+  # Prepare a directory for sock file
+  file { [$sock_dir]:
+    ensure => directory,
+    owner => "${uwsgi_user}",
+    require => Package['uwsgi']
+  }
+
   service { 'uwsgi':
     ensure => running,
     enable => true,
@@ -136,18 +144,12 @@ class uwsgi {
     before => File['apps-available config']
   }
 
-  # Prepare a directory for sock file
-  file { [$sock_dir]:
-    ensure => directory,
-    owner => "${uwsgi_user}",
-    require => Package['uwsgi']
-  }
-
   # Upstart file
   file { '/etc/init/uwsgi.conf':
     ensure => file,
     source => "${inc_file_path}/uwsgi/uwsgi.conf",
-    require => Package['uwsgi']
+    require => Package['uwsgi'],
+    notify => Service['nginx']
   }
 
   # Vassals ini file
@@ -161,7 +163,20 @@ class uwsgi {
     path => "/etc/uwsgi/apps-enabled/${project}.ini",
     ensure => link,
     target => "/etc/uwsgi/apps-available/${project}.ini",
-    require => File['apps-available config']
+    require => File['apps-available config'],
+    notify => Service['nginx']
+  }
+}
+
+class redis{
+  package { 'redis-server':
+    ensure => latest,
+    require => Class['apt']
+  }
+  service { 'redis-server':
+    ensure => running,
+    enable => true,
+    require =>Package['redis-server']
   }
 }
 

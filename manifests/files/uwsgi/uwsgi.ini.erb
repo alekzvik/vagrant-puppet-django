@@ -2,10 +2,12 @@
 # Define variables
 project = %n
 base_dir = /home/vagrant/www/<%= @project %>
+virtualenv = /home/vagrant/virtualenvs/<%= @project %>/
 
 # Config
 uid = <%= @uwsgi_user %>
 gid = <%= @uwsgi_group %>
+
 
 socket = <%= @sock_dir %>/%(project).sock
 master = true
@@ -13,6 +15,5 @@ no-orphans = true
 
 chdir = %(base_dir)/%(project)
 module = %(project).wsgi:application
-virtualenv = /home/vagrant/virtualenvs/<%= @project %>/
 
 logto = /var/log/uwsgi/%(project).log
