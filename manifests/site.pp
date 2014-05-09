@@ -3,10 +3,10 @@ Exec { path => '/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin' }
 # Global variables
 $inc_file_path = '/vagrant/manifests/files' # Absolute path to the files directory (If you're using vagrant, you can leave it alone.)
 $tz = 'Europe/Kiev' # Timezone
-$project = '42-kavyarnya' # Used in nginx and uwsgi
-$db_name = 'kava' # Mysql database name to create
-$db_user = 'kava' # Mysql username to create
-$db_password = 'kava' # Mysql password for $db_user
+$project = '42-deploy' # Used in nginx and uwsgi
+$db_name = 'deploy_dev' # Mysql database name to create
+$db_user = 'deploy_dev' # Mysql username to create
+$db_password = '' # Mysql password for $db_user
 
 include timezone
 include user
@@ -20,6 +20,7 @@ include virtualenv
 include pildeps
 include software
 include locale
+include rabbitmq
 
 class timezone {
   package { "tzdata":
@@ -229,7 +230,7 @@ class mysql {
 
   exec { 'grant user db':
     command => "mysql -u root -e \"${create_db_cmd}${create_user_cmd}${grant_db_cmd}\"",
-    unless => "mysqlshow -u${db_user} -p${db_password} ${db_name}",
+    unless => "mysqlshow -u${db_user} -p${db_password} ${db_name} | grep Tables",
     require => Service['mysql']
   }
 }
@@ -313,7 +314,20 @@ class pildeps {
     command => 'sudo ln -s /usr/lib/`uname -i`-linux-gnu/libfreetype.so /usr/lib/',
     unless => 'test -L /usr/lib/libfreetype.so'
   }
+  }
+class rabbitmq{
+  package { 'rabbitmq-server':
+    ensure => latest,
+    require => Class['apt']
+  }
+  service { 'rabbitmq-server':
+    ensure => running,
+    enable => true,
+    require => Package['rabbitmq-server']
+  }
+
 }
+
 
 class software {
   package { 'git':
