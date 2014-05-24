@@ -36,9 +36,10 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   # For using ssh forwarding you have to set up your system
   # https://help.github.com/articles/using-ssh-agent-forwarding
   config.vm.hostname = "django.dev"
-  config.vm.network "private_network", ip: "192.168.50.4"
-  config.vm.network :forwarded_port, guest: 80, host: 8080
-  config.vm.network :forwarded_port, guest: 8000, host: 8000
+  config.vm.network "private_network", ip: "192.168.50.42"
+  config.vm.network :forwarded_port, guest: 80, host: 4241
+  config.vm.network :forwarded_port, guest: 8000, host: 4242
+  config.vm.network :forwarded_port, guest: 8020, host: 4220
   config.vm.synced_folder "./src", "/home/vagrant/www", type: "nfs", nfs_version:4
 
   # Share an additional folder to the guest VM. The first argument is

@@ -255,6 +255,11 @@ class python {
     require => Class['apt']
   }
 
+  package { 'libffi-dev':
+    ensure => latest,
+    require => Class['apt']
+  }
+
 
   exec { 'install-distribute':
     command => 'curl http://python-distribute.org/distribute_setup.py | python',
