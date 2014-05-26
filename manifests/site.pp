@@ -263,7 +263,7 @@ class python {
   }
 
   exec { 'install-pip':
-    command => 'curl https://raw.github.com/pypa/pip/master/contrib/get-pip.py | python',
+    command => 'easy_install pip',
     require => Exec['install-distribute'],
     unless => 'which pip'
   }
