@@ -10,8 +10,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   # Every Vagrant virtual environment requires a box to build off of.
   #config.vm.box = "precise64"
   #config.vm.box_url = "http://files.vagrantup.com/precise64.box"
-  config.vm.box = "saucy-server-cloudimg-amd64-vagrant-disk1"
-  config.vm.box_url = "http://cloud-images.ubuntu.com/vagrant/saucy/current/saucy-server-cloudimg-amd64-vagrant-disk1.box"
+  config.vm.box = "ubuntu/trusty64"
   config.vm.provider "virtualbox" do |v|
       v.memory = 1024
   end
@@ -40,8 +39,14 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   config.vm.network :forwarded_port, guest: 80, host: 4241
   config.vm.network :forwarded_port, guest: 8000, host: 4242
   config.vm.network :forwarded_port, guest: 8020, host: 4220
-  config.vm.synced_folder "./src", "/home/vagrant/www", type: "nfs", nfs_version:4
-
+  
+  #OSX has bug with nfs
+  if (/darwin/ =~ RUBY_PLATFORM) != nil
+      config.vm.synced_folder "./src", "/home/vagrant/customer-advocacy", owner: "vagrant", group: "vagrant"
+  else
+      config.vm.synced_folder "./src", "/home/vagrant/customer-advocacy", type: "nfs", nfs_version:4, owner: "vagrant", group: "vagrant"
+  end
+  
   # Share an additional folder to the guest VM. The first argument is
   # an identifier, the second is the path on the guest to mount the
   # folder, and the third is the path on the host to the actual folder.

@@ -289,6 +289,13 @@ class virtualenv {
     require => Package['virtualenv']
   }
 
+  exec {'install requirements':
+    command => "/home/vagrant/virtualenvs/${project}/bin/pip install -r requirements.pip",
+    cwd => "/home/vagrant/${project}",
+    user => 'vagrant',
+    require => Exec['create virtualenv']
+  }
+
   file {"/home/vagrant/.bashrc":
     ensure => file,
     mode => 0644,
