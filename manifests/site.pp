@@ -20,6 +20,7 @@ include virtualenv
 include pildeps
 include software
 include locale
+include rabbitmq
 
 class timezone {
   package { "tzdata":
@@ -229,8 +230,20 @@ class mysql {
 
   exec { 'grant user db':
     command => "mysql -u root -e \"${create_db_cmd}${create_user_cmd}${grant_db_cmd}\"",
-    unless => "mysqlshow -u${db_user} -p${db_password} ${db_name}",
+    unless => "mysqlshow -u${db_user} -p${db_password} ${db_name} | grep Tables",
     require => Service['mysql']
+  }
+}
+
+class rabbitmq{
+  package { 'rabbitmq-server':
+    ensure => latest,
+    require => Class['apt']
+  }
+  service { 'rabbitmq-server':
+    ensure => running,
+    enable => true,
+    require => Package['rabbitmq-server']
   }
 }
 
